@@ -167,7 +167,7 @@ async def openclaw_chat(messages: list) -> str:
         try:
             result = subprocess.run(
                 cmd,
-                capture_output=True, text=True, timeout=120,
+                capture_output=True, text=True, timeout=160,
                 env=env, cwd=home_dir
             )
             return result
@@ -177,7 +177,7 @@ async def openclaw_chat(messages: list) -> str:
     result = await loop.run_in_executor(None, run)
 
     if result is None:
-        return "❌ OpenClaw não respondeu dentro do tempo limite (120s)"
+        return "❌ OpenClaw não respondeu dentro do tempo limite (160s)"
 
     # Tenta parsear JSON do stdout
     stdout = result.stdout.strip()
@@ -634,11 +634,12 @@ async def handle_chat(request):
         msgs = [build_admin_system_message(session), *client_msgs]
         user = session.get("user", "desconhecido")
         print(f"[chat] user={user} model={OPENCLAW_MODEL} chars={len(msg)}")
-        content = await openclaw_chat(msgs)
+        content = await asyncio.wait_for(openclaw_chat(msgs), timeout=170)
         print(f"[chat] SUCESSO: user={user}")
         return web.json_response({"content": content, "response": content})
     except asyncio.TimeoutError:
-        return web.json_response({"error": "OpenClaw não respondeu (timeout)"}, status=504)
+        print(f"[chat] TIMEOUT: user={user}")
+        return web.json_response({"error": "OpenClaw demorou demais para responder (timeout)"}, status=504)
     except Exception as e:
         detail = sanitize_error(str(e))
         print(f"[chat] ERRO: {detail}")

@@ -7,6 +7,8 @@ metadata:
   labels:
     app.kubernetes.io/name: openclaw-agent
     app.kubernetes.io/component: route
+  annotations:
+    haproxy.router.openshift.io/timeout: 180s
 spec:
   to:
     kind: Service
