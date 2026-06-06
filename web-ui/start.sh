@@ -17,9 +17,9 @@ fi
 
 # ── Configura credenciais se DEEPSEEK_API_KEY estiver presente ──
 if [ -n "$DEEPSEEK_API_KEY" ]; then
-  echo "[start] Configurando auth provider DeepSeek..."
-  openclaw auth set deepseek --api-key "$DEEPSEEK_API_KEY" 2>&1 || true
-  openclaw config set default-model deepseek/deepseek-v4-flash 2>&1 || true
+  echo "[start] Configurando modelo e credentials..."
+  openclaw models set "$OPENCLAW_INITIAL_MODEL" 2>&1 || true
+  openclaw onboard --non-interactive --accept-risk --deepseek-api-key "$DEEPSEEK_API_KEY" --skip-health 2>&1 || true
 fi
 
 # ── Configura MCP do Morador Online se MORADOR_ONLINE_MCP_JSON estiver presente ──
