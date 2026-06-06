@@ -10,7 +10,7 @@ metadata:
 data:
   # Modelo padrão do OpenClaw
   OPENCLAW_INITIAL_MODEL: "deepseek/deepseek-v4-flash"
-  OPENCLAW_AGENT_ID: "hanna"
+  OPENCLAW_AGENT_ID: "main"
 
   # Data root persistente
   DATA_ROOT: "/data"

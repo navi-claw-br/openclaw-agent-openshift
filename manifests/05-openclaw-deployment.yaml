@@ -59,6 +59,8 @@ spec:
                   name: openclaw-secrets
                   key: MORADOR_ONLINE_MCP_JSON
                   optional: true
+            - name: OPENCLAW_AGENT_ID
+              value: "main"
             - name: CONDOMINIO
               value: "dev.mo.app.br"
             - name: MCP_ADMIN_URL

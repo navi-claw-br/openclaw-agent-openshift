@@ -13,7 +13,7 @@ CONDOMINIO        = os.getenv("CONDOMINIO", "").strip().rstrip("/")
 MCP_ADMIN_URL     = os.getenv("MCP_ADMIN_URL", "https://mcp-server-mo-admin.mo.app.br/mcp")
 SESSION_SECRET    = os.getenv("SESSION_SECRET", "agente-admin-secret")
 OPENCLAW_MODEL    = os.getenv("OPENCLAW_MODEL", "deepseek/deepseek-v4-flash")
-OPENCLAW_AGENT_ID = os.getenv("OPENCLAW_AGENT_ID", "hanna")
+OPENCLAW_AGENT_ID = os.getenv("OPENCLAW_AGENT_ID", "main")
 DATA_ROOT         = os.getenv("DATA_ROOT", "/data")
 
 ADMIN_SYSTEM_PROMPT = os.getenv("ADMIN_SYSTEM_PROMPT", """
@@ -161,6 +161,13 @@ async def openclaw_chat(messages: list) -> str:
                 data = json.loads(line)
                 # Procura por campo de resposta
                 if isinstance(data, dict):
+                    # OpenClaw response format: {"payloads":[{"text":"..."}],"meta":{...}}
+                    if data.get("payloads"):
+                        payloads = data["payloads"]
+                        if isinstance(payloads, list) and len(payloads) > 0:
+                            text = payloads[0].get("text", "")
+                            if text:
+                                return text
                     if data.get("response"):
                         return data["response"]
                     if data.get("text"):
