@@ -116,7 +116,7 @@ async def openclaw_chat(messages: list) -> str:
     home_dir = DATA_ROOT
     cmd = [
         "openclaw", "agent", "--local", "--json",
-        "--agent-id", OPENCLAW_AGENT_ID,
+        "--agent", OPENCLAW_AGENT_ID,
         "--message", prompt
     ]
 
