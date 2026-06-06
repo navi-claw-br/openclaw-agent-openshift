@@ -32,6 +32,44 @@ Regras obrigatórias para ferramentas MCP do Morador Online Admin:
 """).strip()
 
 # ── Helpers ────────────────────────────────────────────────────
+def _extract_response(data: dict) -> str:
+    """Extrai o texto de resposta do JSON do OpenClaw."""
+    # Formato: {"payloads":[{"text":"..."}],"meta":{...}}
+    if data.get("payloads"):
+        payloads = data["payloads"]
+        if isinstance(payloads, list) and len(payloads) > 0:
+            text = payloads[0].get("text", "")
+            if text:
+                return text
+    if data.get("choices"):
+        choices = data["choices"]
+        if isinstance(choices, list) and len(choices) > 0:
+            msg = choices[0].get("message", {}) or {}
+            if msg.get("content"):
+                return msg["content"]
+    if data.get("response"):
+        return data["response"]
+    if data.get("text"):
+        return data["text"]
+    if data.get("content"):
+        c = data["content"]
+        if isinstance(c, str):
+            return c
+        if isinstance(c, list):
+            texts = [x.get("text", "") for x in c if isinstance(x, dict)]
+            if texts:
+                return "\n".join(texts)
+    if data.get("message"):
+        return data["message"]
+    if data.get("output"):
+        return data["output"]
+    # Fallback: se só tem um campo de texto longo, usa ele
+    for val in data.values():
+        if isinstance(val, str) and len(val) > 20:
+            return val
+    return ""
+
+
 def sanitize_error(text: str) -> str:
     if not text: return ""
     text = re.sub(r"sk-[A-Za-z0-9_-]+", "sk-***", text)
@@ -151,49 +189,37 @@ async def openclaw_chat(messages: list) -> str:
 
     # OpenClaw --json output: tenta extrair campo relevante
     if stdout:
-        # Tenta parsear como JSON
+        stripped = stdout.strip()
+        # Tenta parsear o stdout inteiro como JSON (formato multi-linha)
+        try:
+            data = json.loads(stripped)
+            if isinstance(data, dict):
+                text = _extract_response(data)
+                if text:
+                    return text
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # Fallback: linha por linha (procura primeiro JSON parseável ou chunk SSE)
         lines = stdout.split("\n")
         for line in reversed(lines):
             line = line.strip()
             if not line:
                 continue
+            # SSE data: prefix
+            if line.startswith("data: "):
+                line = line[6:]
             try:
                 data = json.loads(line)
-                # Procura por campo de resposta
                 if isinstance(data, dict):
-                    # OpenClaw response format: {"payloads":[{"text":"..."}],"meta":{...}}
-                    if data.get("payloads"):
-                        payloads = data["payloads"]
-                        if isinstance(payloads, list) and len(payloads) > 0:
-                            text = payloads[0].get("text", "")
-                            if text:
-                                return text
-                    if data.get("response"):
-                        return data["response"]
-                    if data.get("text"):
-                        return data["text"]
-                    if data.get("content"):
-                        c = data["content"]
-                        if isinstance(c, str):
-                            return c
-                        if isinstance(c, list):
-                            texts = [x.get("text", "") for x in c if isinstance(x, dict)]
-                            if texts:
-                                return "\n".join(texts)
-                    if data.get("message"):
-                        return data["message"]
-                    if data.get("output"):
-                        return data["output"]
-                    # Fallback: se só tem um campo de texto longo, usa ele
-                    for val in data.values():
-                        if isinstance(val, str) and len(val) > 20:
-                            return val
-                    return json.dumps(data, ensure_ascii=False)
+                    text = _extract_response(data)
+                    if text:
+                        return text
             except (json.JSONDecodeError, ValueError):
-                continue
+                pass
 
         # Fallback: texto direto
-        return stdout
+        return stripped if stripped else "(resposta vazia)"
 
     if result.returncode != 0:
         return f"❌ OpenClaw retornou código {result.returncode}"
