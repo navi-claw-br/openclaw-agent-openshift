@@ -1,0 +1,62 @@
+# UBI 9 based Dockerfile for OpenClaw Agent on OpenShift
+# Executa sem s6-overlay — compatível com restricted-v2 SCC
+
+FROM registry.access.redhat.com/ubi9/ubi:latest AS base
+
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN dnf install -y \
+    python3.11 python3.11-devel python3.11-pip \
+    gcc gcc-c++ make git grep procps-ng \
+    libffi-devel ca-certificates curl \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# Install Node.js 20.x (necessário para OpenClaw)
+RUN curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - \
+    && dnf install -y nodejs \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# Criar usuário não-root (OpenShift sobrescreve UID, grupo 0 é chave)
+RUN useradd -u 1001 -m -d /data openclaw
+
+WORKDIR /opt/openclaw
+
+# ── Instalar OpenClaw via npm global ──
+RUN npm install -g openclaw@latest \
+    && npm cache clean --force
+
+# ── Instalar dependências Python para Web UI ──
+RUN python3.11 -m venv /opt/openclaw/venv && \
+    . /opt/openclaw/venv/bin/activate && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir aiohttp
+
+# ── OpenShift permissions (arbitrary UID, always GID 0) ──
+RUN chown -R 1001:0 /opt/openclaw && \
+    chmod -R a+rX /opt/openclaw && \
+    chmod -R g=u /opt/openclaw
+
+# ── Garantir acesso ao Node global ──
+RUN ln -sf /usr/lib/node_modules/openclaw /opt/openclaw/openclaw || true
+
+# ── Data directory ──
+RUN mkdir -p /data && \
+    chown -R 1001:0 /data && \
+    chmod -R g=u /data
+
+# Path: incluir openclaw CLI e venv Python
+ENV PATH="/opt/openclaw/venv/bin:/usr/local/bin:/usr/bin:${PATH}"
+ENV DATA_ROOT="/data"
+ENV HOME="/data"
+
+VOLUME ["/data"]
+
+# Web UI será montada via ConfigMap em /opt/openclaw-web
+# O startup wrapper fica em /opt/openclaw-web/start.sh
+# O entrypoint dele é quem sobe tudo
+
+ENTRYPOINT ["/bin/bash"]
+CMD ["/opt/openclaw-web/start.sh"]

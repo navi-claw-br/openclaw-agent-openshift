@@ -1,0 +1,19 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: openclaw-agent
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw-agent
+    app.kubernetes.io/component: route
+spec:
+  to:
+    kind: Service
+    name: openclaw-agent
+  port:
+    targetPort: http-web
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

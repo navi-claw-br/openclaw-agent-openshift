@@ -1,0 +1,107 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw-agent
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw-agent
+    app.kubernetes.io/component: agent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openclaw-agent
+      app.kubernetes.io/component: agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openclaw-agent
+        app.kubernetes.io/component: agent
+    spec:
+      serviceAccountName: openclaw-agent
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: openclaw
+          image: ghcr.io/navi-claw-br/openclaw-agent:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - /opt/openclaw-web/start.sh
+          envFrom:
+            - configMapRef:
+                name: openclaw-config
+          env:
+            - name: HOME
+              value: /data
+            - name: DATA_ROOT
+              value: /data
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: DEEPSEEK_API_KEY
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: MORADOR_ONLINE_MCP_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: MORADOR_ONLINE_MCP_JSON
+                  optional: true
+            - name: CONDOMINIO
+              value: "dev.mo.app.br"
+            - name: MCP_ADMIN_URL
+              value: "https://mcp-server-mo-admin.mo.app.br/mcp"
+            - name: WEB_PORT
+              value: "8080"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+              name: http-web
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: web-ui
+              mountPath: /opt/openclaw-web
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: openclaw-data
+        - name: web-ui
+          configMap:
+            name: openclaw-web

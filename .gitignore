@@ -1,0 +1,25 @@
+# Ignorar secrets reais
+04-openclaw-secrets.yaml
+*.secret.yaml
+
+# Node modules (caso tenha package.json local)
+node_modules/
+
+# Ambiente virtual
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/

@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-web
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw-agent
+    app.kubernetes.io/component: web-config
+data:
+  openclaw-web.py: |
+    # (preenchido pelo deploy via kustomize ou apply direto)
+    # Conteúdo idêntico ao web-ui/openclaw-web.py
+    # Use: kubectl create configmap openclaw-web --from-file=openclaw-web.py=../web-ui/openclaw-web.py -n openclaw

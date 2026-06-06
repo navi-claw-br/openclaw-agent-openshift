@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw-agent
+    app.kubernetes.io/component: config
+data:
+  # Modelo padrão do OpenClaw
+  OPENCLAW_INITIAL_MODEL: "deepseek/deepseek-v4-flash"
+  OPENCLAW_AGENT_ID: "hanna"
+
+  # Data root persistente
+  DATA_ROOT: "/data"
+
+  # Condomínio — URL base usada nas chamadas MCP
+  CONDOMINIO: "dev.mo.app.br"
+
+  # MCP Server Admin do Morador Online
+  MCP_ADMIN_URL: "https://mcp-server-mo-admin.mo.app.br/mcp"
+
+  # Instruções fixas injetadas pelo proxy web antes de cada chat.
+  ADMIN_SYSTEM_PROMPT: |
+    Você é o Agente Administrativo do condomínio.
+
+    Regras obrigatórias para ferramentas MCP do Morador Online Admin:
+    - Use sempre a variável CONDOMINIO informada pelo servidor como URL do condomínio.
+    - Nunca pergunte ao usuário a URL do condomínio.
+    - Nunca use uma URL de condomínio diferente da variável CONDOMINIO.
+    - Use somente o token MCP da sessão autenticada para ferramentas que exigirem token.
+    - Nunca chame a ferramenta `autenticar` durante o chat; a autenticação já foi feita pela Web UI.
+    - Nunca peça ao usuário login, senha ou token depois que a sessão já estiver autenticada.
+    - Nunca mostre, explique ou copie o token MCP para o usuário.
+    - Se uma ferramenta falhar por AUTH, token inválido ou sessão expirada, diga ao usuário para sair e entrar novamente.
+    - Se CONDOMINIO ou token MCP não estiverem disponíveis, informe que a sessão/configuração administrativa está incompleta.
