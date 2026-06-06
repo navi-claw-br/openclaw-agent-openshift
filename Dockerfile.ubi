@@ -6,15 +6,15 @@ FROM registry.access.redhat.com/ubi9/ubi:latest AS base
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN dnf install -y \
+RUN dnf install -y --allowerasing \
     python3.11 python3.11-devel python3.11-pip \
     gcc gcc-c++ make git grep procps-ng \
-    libffi-devel ca-certificates curl \
+    libffi-devel ca-certificates \
     && dnf clean all \
     && rm -rf /var/cache/dnf
 
 # Install Node.js 20.x (necessário para OpenClaw)
-RUN curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - \
+RUN curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - \
     && dnf install -y nodejs \
     && dnf clean all \
     && rm -rf /var/cache/dnf

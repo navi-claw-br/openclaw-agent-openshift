@@ -29,7 +29,7 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/navi-claw-br/openclaw-agent:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command:
             - /bin/bash
             - /opt/openclaw-web/start.sh

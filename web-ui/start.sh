@@ -12,20 +12,20 @@ OPENCLAW_AGENT_ID="${OPENCLAW_AGENT_ID:-hanna}"
 # ── Garante que o OpenClaw está onboard ──
 if [ ! -f "$DATA_ROOT/.openclaw/identity.yaml" ]; then
   echo "[start] Inicializando workspace OpenClaw..."
-  openclaw onboard --non-interactive --accept-risk --data-root "$DATA_ROOT" 2>&1 || true
+  openclaw onboard --non-interactive --accept-risk --workspace "$DATA_ROOT" 2>&1 || true
 fi
 
 # ── Configura credenciais se DEEPSEEK_API_KEY estiver presente ──
 if [ -n "$DEEPSEEK_API_KEY" ]; then
   echo "[start] Configurando auth provider DeepSeek..."
-  openclaw auth set deepseek --api-key "$DEEPSEEK_API_KEY" --data-root "$DATA_ROOT" 2>&1 || true
-  openclaw config set default-model deepseek/deepseek-v4-flash --data-root "$DATA_ROOT" 2>&1 || true
+  openclaw auth set deepseek --api-key "$DEEPSEEK_API_KEY" 2>&1 || true
+  openclaw config set default-model deepseek/deepseek-v4-flash 2>&1 || true
 fi
 
 # ── Configura MCP do Morador Online se MORADOR_ONLINE_MCP_JSON estiver presente ──
 if [ -n "$MORADOR_ONLINE_MCP_JSON" ]; then
   echo "[start] Registrando MCP do Morador Online..."
-  echo "$MORADOR_ONLINE_MCP_JSON" | openclaw mcp set morador-online --json-stdin --data-root "$DATA_ROOT" 2>&1 || true
+  echo "$MORADOR_ONLINE_MCP_JSON" | openclaw mcp set morador-online --json-stdin 2>&1 || true
 fi
 
 # ── Verifica que o openclaw funciona ──
